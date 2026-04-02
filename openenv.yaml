@@ -1,0 +1,30 @@
+name: delivery-env
+description: Food delivery optimization environment for AI agents
+
+tasks:
+  - id: easy
+    description: Single delivery task in small grid
+  - id: medium
+    description: Multiple deliveries in medium grid
+  - id: hard
+    description: Multiple deliveries in large grid with complexity
+
+api:
+  base_url: http://localhost:8000
+  endpoints:
+    reset: /reset
+    step: /step
+    state: /state
+
+observation_space:
+  agent_position: [int, int]
+  delivery_locations: list
+  delivered: list
+  steps: int
+
+action_space:
+  - UP
+  - DOWN
+  - LEFT
+  - RIGHT
+  - DELIVER
