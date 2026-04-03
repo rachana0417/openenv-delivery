@@ -2,7 +2,7 @@
 name = "openenv-delivery"
 version = "0.1.0"
 description = "OpenEnv Delivery Environment"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "fastapi",
