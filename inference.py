@@ -1,55 +1,74 @@
 import os
 import requests
+from openai import OpenAI
 
-# Environment variables
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+# ===============================
+# REQUIRED ENV VARIABLES
+# ===============================
+API_BASE_URL = os.getenv("API_BASE_URL", "https://rachana0417-openenv-delivery.hf.space")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "DELIVER"]
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN
+)
 
+# ===============================
+# LOG FORMAT FUNCTIONS
+# ===============================
+def log_start():
+    print("[START] OpenEnv Inference Started")
 
-def run_task(task_name):
-    print("[START]")
-    print(f"task: {task_name}")
+def log_step(step, action, reward, done):
+    print(f"[STEP] step={step} action={action} reward={reward} done={done}")
 
+def log_end(score):
+    print(f"[END] Final Score: {score}")
+
+# ===============================
+# SIMPLE AGENT LOGIC
+# ===============================
+def run_episode():
     # Reset environment
-    res = requests.get(f"{API_BASE_URL}/reset", params={"task": task_name})
-    state = res.json()["state"]
+    response = requests.get(f"{API_BASE_URL}/reset?task=easy").json()
+    state = response["state"]
 
     done = False
-    steps = 0
+    step_count = 0
+    total_reward = 0
 
-    while not done and steps < 20:
-        action = ACTIONS[steps % len(ACTIONS)]
+    actions = ["up", "down", "left", "right"]
+
+    while not done and step_count < 20:
+        action = actions[step_count % 4]
 
         res = requests.post(
             f"{API_BASE_URL}/step",
             json={"action": action}
-        )
+        ).json()
 
-        data = res.json()
-        state = data["state"]
-        reward = data["reward"]
-        done = data["done"]
+        state = res["state"]
+        reward = res["reward"]
+        done = res["done"]
 
-        print("[STEP]")
-        print(f"action: {action}")
-        print(f"reward: {reward}")
-        print(f"done: {done}")
+        total_reward += reward
+        step_count += 1
 
-        steps += 1
+        log_step(step_count, action, reward, done)
 
-    # Simple scoring
-    if done:
-        score = 1.0
-    else:
-        score = 0.0
-
-    print("[END]")
-    print(f"score: {score}")
+    return total_reward
 
 
+# ===============================
+# MAIN
+# ===============================
 if __name__ == "__main__":
-    for task in ["easy", "medium", "hard"]:
-        run_task(task)
+    log_start()
+
+    score = run_episode()
+
+    # Normalize score between 0 and 1
+    final_score = max(0.0, min(1.0, score / 20))
+
+    log_end(final_score)
